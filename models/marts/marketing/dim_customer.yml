@@ -1,0 +1,57 @@
+models:
+  - name: dim_customer
+    columns:
+      - name: customer_id
+        data_type: number
+        description: A unique identifier for each customer in the database.
+        data_tests:
+          - unique
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 100
+      - name: first_name
+        data_type: varchar
+        description: The first name of the customer.
+        data_tests:
+          - dbt_expectations.expect_column_value_lengths_to_be_between:
+              min_value: 3
+              max_value: 10
+              row_condition: "{{adapter.quote('FIRST_NAME')}} is not null"
+      - name: last_name
+        data_type: varchar
+        description: The last name or surname of the customer.
+        data_tests:
+          - dbt_expectations.expect_column_value_lengths_to_equal:
+              value: 2
+              row_condition: "{{adapter.quote('LAST_NAME')}} is not null"
+      - name: first_order_date
+        data_type: date
+        description: The date of the customer's first order. This is derived by taking the minimum order date for each customer from the orders table.
+      - name: most_recent_order_date
+        data_type: date
+        description: The date of the customer's most recent order. This is derived by taking the maximum order date for each customer from the orders table.
+      - name: number_of_orders
+        data_type: number
+        description: The total number of orders placed by the customer. This is calculated by counting the number of order IDs associated with each customer in the orders table.
+        data_tests:
+          - accepted_values:
+              values:
+                - "0"
+                - "1"
+                - "2"
+                - "3"
+                - "5"
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 5
+    tests:
+      - dbt_utils.recency:
+          field: FIRST_ORDER_DATE
+          datepart: day
+          interval: 3
+      - dbt_utils.recency:
+          field: MOST_RECENT_ORDER_DATE
+          datepart: day
+          interval: 2
+    description: The dim_customer model provides a consolidated view of customer data, including their unique identifier, name, and order-related metrics. It combines information from the stg_jaffle_shop__customers and stg_jaffle_shop__orders staging tables to calculate the first order date, most recent order date, and total number of orders for each customer. This model is useful for analyzing customer behavior and order patterns.
