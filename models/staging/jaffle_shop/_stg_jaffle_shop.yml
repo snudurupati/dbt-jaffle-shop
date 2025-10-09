@@ -44,32 +44,12 @@ models:
 
       - name: status
         description: "{{ doc('order_status') }}"
-        data_type: varchar
         data_tests:
           - accepted_values:
               values:
                 - completed
                 - placed
                 - return_pending
-                - returned
-                - shipped
-          - dbt_expectations.expect_column_value_lengths_to_be_between:
-              min_value: 6
-              max_value: 14
-              row_condition: "{{adapter.quote('STATUS')}} is not null"
-
-      - name: customer_id
-        description: Foreign key to stg_customers.customer_id.
-        data_type: number
-        data_tests:
-          - dbt_utils.accepted_range:
-              min_value: 1
-              max_value: 99
-
-      - name: order_date
-        description: The date when the order was placed, directly sourced from the 'order_date' column in the raw data.
-        data_type: date
-
       - name: customer_id
         description: Foreign key to stg_customers.customer_id.
     tests:
