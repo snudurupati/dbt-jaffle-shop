@@ -1,34 +1,138 @@
 models:
   - name: stg_jaffle_shop__customers
     description: Staged customer data from our jaffle shop app.
-    columns: 
+    columns:
       - name: customer_id
-        description: The primary key for customers.
+        description: A unique identifier for each customer, derived from the 'id' column in the raw.jaffle_shop.customers table.
+        data_type: number
         data_tests:
           - unique
           - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 100
+
+      - name: first_name
+        description: The first name of the customer, sourced from the 'first_name' column in the raw.jaffle_shop.customers table.
+        data_type: varchar
+        data_tests:
+          - dbt_expectations.expect_column_value_lengths_to_be_between:
+              min_value: 3
+              max_value: 10
+              row_condition: "{{adapter.quote('FIRST_NAME')}} is not null"
+
+      - name: last_name
+        description: The last name of the customer, sourced from the 'last_name' column in the raw.jaffle_shop.customers table.
+        data_type: varchar
+        data_tests:
+          - dbt_expectations.expect_column_value_lengths_to_equal:
+              value: 2
+              row_condition: "{{adapter.quote('LAST_NAME')}} is not null"
 
   - name: stg_jaffle_shop__orders
     description: Staged order data from our jaffle shop app.
-    columns: 
+    columns:
       - name: order_id
-        description: Primary key for orders.
+        description: A unique identifier for each order in the system, derived from the 'id' column in the raw data.
+        data_type: number
         data_tests:
           - unique
           - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 99
+
       - name: status
-        description: "{{ doc('order_status') }}"
+        description: "Indicates the current state of the order, such as 'completed', 'pending', or 'cancelled'."
+        data_type: varchar
         data_tests:
           - accepted_values:
               values:
                 - completed
-                - shipped
-                - returned
                 - placed
                 - return_pending
+                - returned
+                - shipped
+          - dbt_expectations.expect_column_value_lengths_to_be_between:
+              min_value: 6
+              max_value: 14
+              row_condition: "{{adapter.quote('STATUS')}} is not null"
+
+      - name: customer_id
+        description: The unique identifier for the customer who placed the order, mapped from the 'user_id' column in the raw data.
+        data_type: number
+        data_tests:
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 99
+
+      - name: order_date
+        description: The date when the order was placed, directly sourced from the 'order_date' column in the raw data.
+        data_type: date
+
       - name: customer_id
         description: Foreign key to stg_customers.customer_id.
+    tests:
+      - dbt_utils.recency:
+          field: ORDER_DATE
+          datepart: day
+          interval: 1
+  - name: stg_stripe__payments
+    columns:
+      - name: payment_id
+        description: A unique identifier for the payment transaction, sourced from the 'id' field in the raw Stripe payment data.
+        data_type: number
         data_tests:
-          - relationships:
-              to: ref('stg_jaffle_shop__customers')
-              field: customer_id
+          - unique
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 120
+      - name: order_id
+        description: A unique identifier for the order associated with the payment, sourced from the 'orderid' field in the raw Stripe payment data.
+        data_type: number
+        data_tests:
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 99
+      - name: payment_method
+        description: The method used for the payment, such as credit card or bank transfer, sourced from the 'paymentmethod' field in the raw Stripe payment data.
+        data_type: varchar
+        data_tests:
+          - accepted_values:
+              values:
+                - bank_transfer
+                - coupon
+                - credit_card
+                - gift_card
+          - dbt_expectations.expect_column_value_lengths_to_be_between:
+              min_value: 6
+              max_value: 13
+              row_condition: "{{adapter.quote('PAYMENT_METHOD')}} is not null"
+      - name: status
+        description: Indicates the current state of the payment, such as 'pending', 'completed', or 'failed'.
+        data_type: varchar
+        data_tests:
+          - accepted_values:
+              values:
+                - fail
+                - success
+          - dbt_expectations.expect_column_value_lengths_to_be_between:
+              min_value: 4
+              max_value: 7
+              row_condition: "{{adapter.quote('STATUS')}} is not null"
+      - name: amount
+        description: Represents the monetary value of the payment, converted from cents to dollars.
+        data_type: number
+        data_tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 30
+      - name: created_at
+        description: The timestamp when the payment was created, stored in UTC format.
+        data_type: date
+    tests:
+      - dbt_utils.recency:
+          field: CREATED_AT
+          datepart: day
+          interval: 1
