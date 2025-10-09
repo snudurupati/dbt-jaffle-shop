@@ -1,4 +1,5 @@
 {
     "dbt.dbtIntegration": "core",
+    "dbt.enableNotebooks": true,
     "dbt.enableNewLineagePanel": true
 }
