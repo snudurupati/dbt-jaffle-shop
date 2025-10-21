@@ -1,0 +1,27 @@
+models:
+  - name: new_customers
+    columns:
+      - name: month
+        description: The first day of each month, truncated from the FIRST_ORDER_DATE, representing the month in which new customers placed their first order.
+        data_type: date
+        tests:
+          - unique
+          - not_null
+          - accepted_values:
+              values: []
+      - name: new_customers
+        description: The count of customers who placed their first order in the specified month of the previous year.
+        data_type: number
+        tests:
+          - unique
+          - not_null
+          - accepted_values:
+              values: []
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 0
+    tests:
+      - dbt_utils.recency:
+          field: MONTH
+          datepart: minute
+          interval: 0
