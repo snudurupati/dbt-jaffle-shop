@@ -1,0 +1,23 @@
+models:
+  - name: monthly_new_customers
+    description: The 'monthly_new_customers' model calculates the number of new customers acquired each month during the previous year. It aggregates data from the 'DIM_CUSTOMER' table by truncating the 'FIRST_ORDER_DATE' to the month level and counting the distinct 'customer_id' values. The results are grouped and ordered by month.
+    columns:
+      - name: month
+        description: The first day of the month derived from the FIRST_ORDER_DATE column, representing the month in which new customers placed their first order.
+        data_type: date
+        data_tests:
+          - unique
+          - not_null
+          - accepted_values:
+              values: []
+      - name: new_customers
+        description: The count of unique customers who placed their first order in the specified month.
+        data_type: number
+        data_tests:
+          - unique
+          - not_null
+          - accepted_values:
+              values: []
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 0
