@@ -1,5 +1,5 @@
 {
-    "dbt.dbtIntegration": "core",
+    "dbt.dbtIntegration": "cloud",
     "dbt.enableNotebooks": true,
     "dbt.enableNewLineagePanel": true,
     "dbt.perspectiveTheme": "Vintage"
